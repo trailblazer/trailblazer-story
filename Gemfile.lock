@@ -1,0 +1,28 @@
+PATH
+  remote: .
+  specs:
+    trailblazer-story (0.1.0)
+      trailblazer-activity
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    hirb (0.7.3)
+    minitest (5.11.3)
+    rake (10.5.0)
+    trailblazer-activity (0.7.1)
+      hirb
+      trailblazer-context
+    trailblazer-context (0.1.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bundler (~> 1.16)
+  minitest (~> 5.0)
+  rake (~> 10.0)
+  trailblazer-story!
+
+BUNDLED WITH
+   1.16.1
