@@ -4,7 +4,7 @@ require "ostruct"
 class StoryTest < Minitest::Spec
   Product = OpenStruct
 
-  it do
+  let(:bs) do
     bs = Module.new do
       extend Trailblazer::Activity::Railway()
       extend Trailblazer::Story::InputOutput
@@ -22,13 +22,19 @@ class StoryTest < Minitest::Spec
 
       # step :product,
       step method(:product),
-        input: Trailblazer::Story::Input(hash: ->(ctx, brand:, supplier:, **) {
+        input: Trailblazer::Story::Input(hash: ->(ctx, brand:, supplier:, **user_options) {
+        # input: Trailblazer::Story::Input(hash: ->(ctx, brand:, supplier:, _story_options:, **user_options) {
+          default_options =
           {
           name:     "Atomic",
           sku:      "123AAA",
           brand:    brand,
           supplier: supplier
           }
+
+          # user_options = _story_options[:product] || {}
+
+          default_options.merge(user_options)
         }),
         output: Trailblazer::Story::Output::ExtractModel(:model => :product)
 
@@ -36,11 +42,22 @@ class StoryTest < Minitest::Spec
       # step :product_with_size_break
 
     end
+  end
 
-    ctx = {brand: "Volcom", supplier: "WC"}
+  it "defaults options using the {default_options} data structure" do
+    # ctx = {brand: "Volcom", supplier: "WC", _story_options: {}}
+    ctx = {brand: "Volcom", supplier: "WC",}
 
     signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
 
     ctx[:product].inspect.must_equal %{#<OpenStruct name="Atomic", sku="123AAA", brand="Volcom", supplier="WC">}
+  end
+
+  it "allows overriding defaults options" do
+    ctx = {brand: "Volcom", supplier: "WC", name: "Atmospheric"}
+
+    signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
+
+    ctx[:product].inspect.must_equal %{#<OpenStruct name="Atmospheric", sku="123AAA", brand="Volcom", supplier="WC">}
   end
 end
