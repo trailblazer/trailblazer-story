@@ -20,14 +20,22 @@ module Trailblazer
       end
     end
 
+    # TODO: allow deep_merge
+    # TODO: default_options could be a "lazy" hash that only computes those values not provided via {overrides}.
+    def self.Merge(default_options, overrides)
+      default_options.merge(overrides)
+    end
 
+    def self.Input(hash:, name:, strategy: method(:Merge))
+      ->(ctx, **) do # TODO: why do kw args not work here? {:_overrides}
+        default_options = hash.(ctx, **ctx) # execute the input provider.
 
-    def self.Input(hash:)
-      ->(ctx, **) do
-        args = hash.(ctx, **ctx)
-        Trailblazer::Context(args)
+        options = strategy.(default_options, ctx[:_overrides][name] || {})
+
+        Trailblazer::Context(options)
       end
     end
+
 
     module Input
       module_function
