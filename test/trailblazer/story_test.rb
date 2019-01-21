@@ -6,6 +6,7 @@ require "ostruct"
 class StoryTest < Minitest::Spec
   Product = OpenStruct
   Brand   = OpenStruct
+  Item    = OpenStruct
 
   let(:bs) do
     bs = Module.new do
@@ -30,12 +31,18 @@ class StoryTest < Minitest::Spec
         }
       end
 
+      def item_defaults(ctx, **)
+        {
+          # name:     "Atomic",
+        }
+      end
+
       # def product(ctx, **options)
       #   ctx[:model] = Product.new(options)
       # end
 
       builders = Hash[
-        {product: Product, brand: Brand}.collect do |name, constant|
+        {product: Product, brand: Brand, item: Item}.collect do |name, constant|
           [name, ->(ctx, **options) { ctx[:model] = constant.new(options) }]
         end
       ]
@@ -49,6 +56,7 @@ class StoryTest < Minitest::Spec
       # step :product,
       step builder: builders[:brand], defaults: method(:brand_defaults), name: :brand
       step builder: builders[:product], defaults: method(:product_defaults), name: :product
+      step builder: builders[:item], defaults: method(:item_defaults), name: :item
 
       # step :product_with_size_break
 
@@ -70,5 +78,14 @@ class StoryTest < Minitest::Spec
     signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
 
     ctx[:product].inspect.must_equal %{#<OpenStruct name="Atmospheric", sku="123AAA", brand=#<OpenStruct name=\"Volcom\">, supplier="WC">}
+  end
+
+  it "doesn't leak defaults into the following episode (both have {:name} attribute)" do
+    ctx = {supplier: "WC", _overrides: {}}
+
+    signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
+
+    ctx[:product].inspect.must_equal %{#<OpenStruct name="Atomic", sku="123AAA", brand=#<OpenStruct name=\"Roxy\">, supplier="WC">}
+    ctx[:item].inspect.must_equal %{#<OpenStruct>}
   end
 end
