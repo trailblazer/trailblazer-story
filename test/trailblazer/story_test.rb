@@ -67,8 +67,8 @@ class StoryTest < Minitest::Spec
       step builder: builders[:item], defaults: method(:item_defaults), name: :item
 
       # product.size_breaks
-      iterate set: ->(ctx, **){3.times}, name: :size_breaks, item_name: :size_break do
-        def size_break_defaults(ctx, product:, size:"L", **)
+      iterate set: ->(ctx, **){["S", "M", "L"]}, name: :size_breaks, item_name: :size_break, inject_as: :size do
+        def size_break_defaults(ctx, product:, size:, **)
           {
             product: product,
             size: size,
@@ -129,7 +129,7 @@ class StoryTest < Minitest::Spec
     signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
 
 # FIXME: {:supplier} shouldn't be here!
-    ctx[:size_breaks].inspect.must_equal %{[#<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">]}
+    ctx[:size_breaks].inspect.must_equal %{[#<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"S\", color=\"RED\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"M\", color=\"RED\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">]}
   end
   it "Iterate allows {:_overrides}" do
     ctx = {supplier: "WC", _overrides: {size_breaks:{"1" => {color: "PINK"}}}}
@@ -137,6 +137,6 @@ class StoryTest < Minitest::Spec
     signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
 
 # FIXME: {:supplier} shouldn't be here!
-    ctx[:size_breaks].inspect.must_equal %{[#<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"PINK\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">]}
+    ctx[:size_breaks].inspect.must_equal %{[#<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"S\", color=\"RED\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"M\", color=\"PINK\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">]}
   end
 end

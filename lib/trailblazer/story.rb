@@ -22,13 +22,13 @@ module Trailblazer
         super(*args)
       end
 
-      def iterate(set:, name:, item_name:, &block)
+      def iterate(set:, name:, item_name:, inject_as:, &block)
         episode = Module.new do
           extend Story
           instance_exec(&block)
         end
 
-        iterate = Iterate.new(episode: episode, set: set, item_name: item_name, name: name)
+        iterate = Iterate.new(episode: episode, set: set, item_name: item_name, name: name, inject_as: inject_as)
 
         step builder: iterate, name: name, defaults: ->(ctx, product:, _overrides:, **){ {product: product, _overrides: _overrides} } # FIXME
       end
@@ -52,11 +52,12 @@ module Trailblazer
 
     class Iterate
       # module_function
-      def initialize(episode:, set:, item_name:, name:)
+      def initialize(episode:, set:, item_name:, name:, inject_as:)
         @episode = episode
         @set     = set
         @item_name = item_name
         @name = name
+        @inject_as = inject_as
       end
 
       def call(ctx, **)
@@ -67,7 +68,7 @@ module Trailblazer
 
         ctx[:model] =
           set.each_with_index.collect do |item, index|
-            ctx = ctx.merge(:_overrides => {@item_name => overrides[index.to_s] || {}})
+            ctx = ctx.merge(:_overrides => {@item_name => overrides[index.to_s] || {}}, @inject_as => item)
 
             # FIXME: use Subprocess or Sequence or whatever
             signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(@episode, [ctx, {}])
