@@ -4,6 +4,12 @@ require "trailblazer/activity"
 module Trailblazer
   module Story
 
+    def self.extended(extender)
+      extender.extend Trailblazer::Activity::Railway()
+      extender.extend Trailblazer::Story::InputOutput
+      extender.extend Trailblazer::Story::DSL
+    end
+
     module DSL
       def step(builder:, defaults:, name:, **options)
         args = [
@@ -14,6 +20,17 @@ module Trailblazer
         ]
 
         super(*args)
+      end
+
+      def iterate(set:, name:, item_name:, &block)
+        episode = Module.new do
+          extend Story
+          instance_exec(&block)
+        end
+
+        iterate = Iterate.new(episode: episode, set: set, item_name: item_name)
+
+        step builder: iterate, name: name, defaults: ->(ctx, product:, _overrides:, **){ {product: product, _overrides: _overrides} } # FIXME
       end
     end
 
@@ -30,6 +47,28 @@ module Trailblazer
         end
 
         super(task, options)
+      end
+    end
+
+    class Iterate
+      # module_function
+      def initialize(episode:, set:, item_name:)
+        @episode = episode
+        @set     = set
+        @item_name = item_name
+      end
+
+      def call(ctx, **)
+        set = @set.(ctx, **ctx)
+
+        ctx[:model] =
+          set.each_with_index.collect do |item, index|
+
+            # FIXME: use Subprocess or Sequence or whatever
+            signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(@episode, [ctx, {}])
+
+            ctx[@item_name]
+          end
       end
     end
 
