@@ -131,4 +131,12 @@ class StoryTest < Minitest::Spec
 # FIXME: {:supplier} shouldn't be here!
     ctx[:size_breaks].inspect.must_equal %{[#<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">]}
   end
+  it "Iterate allows {:_overrides}" do
+    ctx = {supplier: "WC", _overrides: {size_breaks:{"1" => {color: "PINK"}}}}
+
+    signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
+
+# FIXME: {:supplier} shouldn't be here!
+    ctx[:size_breaks].inspect.must_equal %{[#<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"PINK\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">]}
+  end
 end
