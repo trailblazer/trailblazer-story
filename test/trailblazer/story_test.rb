@@ -1,6 +1,8 @@
 require "test_helper"
 require "ostruct"
 
+# linear stories where you can jump into any scenario and leave at any point or skip
+
 class StoryTest < Minitest::Spec
   Product = OpenStruct
 
@@ -8,7 +10,17 @@ class StoryTest < Minitest::Spec
     bs = Module.new do
       extend Trailblazer::Activity::Railway()
       extend Trailblazer::Story::InputOutput
+      extend Trailblazer::Story::DSL
       module_function
+
+      def product_defaults(ctx, brand:, supplier:, **) # DISCUSS: limit the args, without **?
+        {
+          name:     "Atomic",
+          sku:      "123AAA",
+          brand:    brand,
+          supplier: supplier
+        }
+      end
 
       def product(ctx, **options)
         ctx[:model] = Product.new(options)
@@ -21,23 +33,7 @@ class StoryTest < Minitest::Spec
       # step :updated_by#, factory: :super_admin
 
       # step :product,
-      step method(:product),
-        input: Trailblazer::Story::Input(name: :product, hash: ->(ctx, brand:, supplier:, **user_options) {
-        # input: Trailblazer::Story::Input(hash: ->(ctx, brand:, supplier:, _story_options:, **user_options) {
-          default_options =
-          {
-          name:     "Atomic",
-          sku:      "123AAA",
-          brand:    brand,
-          supplier: supplier
-          }
-
-          # user_options = _story_options[:product] || {}
-
-
-        }),
-        output: Trailblazer::Story::Output::ExtractModel(:model => :product)
-
+      step builder: method(:product), defaults: method(:product_defaults), name: :product
 
       # step :product_with_size_break
 

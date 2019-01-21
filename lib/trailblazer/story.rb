@@ -4,6 +4,19 @@ require "trailblazer/activity"
 module Trailblazer
   module Story
 
+    module DSL
+      def step(builder:, defaults:, name:, **options)
+        args = [
+          builder,
+
+          input: Trailblazer::Story::Input(name: name, hash: defaults),
+          output: Trailblazer::Story::Output::ExtractModel(:model => name)
+        ]
+
+        super(*args)
+      end
+    end
+
     module InputOutput
       def step(task, options={})
         options = options.dup
