@@ -9,6 +9,7 @@ class StoryTest < Minitest::Spec
   Item    = OpenStruct
   ProductRelease = OpenStruct
   SizeBreak = OpenStruct
+  Detail = OpenStruct
 
   let(:bs) do
     bs = Module.new do
@@ -36,6 +37,13 @@ class StoryTest < Minitest::Spec
         }
       end
 
+      def detail_defaults(ctx, name: "Dutch Nuggets", **)
+        {
+          name: name,
+          sku:  "#{name}-1",
+        }
+      end
+
       def product_release_defaults(ctx, product:, **)
         {
           # name:     "Atomic",
@@ -50,7 +58,7 @@ class StoryTest < Minitest::Spec
       # end
 
       builders = Hash[
-        {product: Product, brand: Brand, item: Item, product_release: ProductRelease, size_break: SizeBreak}.collect do |name, constant|
+        {product: Product, brand: Brand, item: Item, product_release: ProductRelease, size_break: SizeBreak, detail: Detail}.collect do |name, constant|
           [name, ->(ctx, **options) { ctx[:model] = constant.new(options) }]
         end
       ]
@@ -65,6 +73,7 @@ class StoryTest < Minitest::Spec
       step builder: builders[:brand], defaults: method(:brand_defaults), name: :brand
       step builder: builders[:product], defaults: method(:product_defaults), name: :product
       step builder: builders[:item], defaults: method(:item_defaults), name: :item
+      step builder: builders[:detail], defaults: method(:detail_defaults), name: :detail
 
       # product.size_breaks
       iterate set: ->(ctx, **){["S", "M", "L"]}, name: :size_breaks, item_name: :size_break, inject_as: :size do
@@ -93,14 +102,16 @@ class StoryTest < Minitest::Spec
     signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
 
     ctx[:product].inspect.must_equal %{#<OpenStruct name="Atomic", sku="123AAA", brand=#<OpenStruct name=\"Roxy\">, supplier="WC">}
+    ctx[:detail].inspect.must_equal %{#<OpenStruct name=\"Dutch Nuggets\", sku=\"Dutch Nuggets-1\">}
   end
 
   it "allows overriding defaults options via the override options" do
-    ctx = {supplier: "WC", _overrides: {product: {name: "Atmospheric"}, brand: {name: "Volcom"}}}
+    ctx = {supplier: "WC", _overrides: {product: {name: "Atmospheric"}, brand: {name: "Volcom"}, detail: {name: "Bad Religion"}}}
 
     signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
 
     ctx[:product].inspect.must_equal %{#<OpenStruct name="Atmospheric", sku="123AAA", brand=#<OpenStruct name=\"Volcom\">, supplier="WC">}
+    ctx[:detail].inspect.must_equal %{#<OpenStruct name=\"Bad Religion\", sku=\"Bad Religion-1\">}
   end
 
   it "doesn't leak defaults into the following episode (both have {:name} attribute)" do
