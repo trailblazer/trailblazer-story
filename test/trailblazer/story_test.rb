@@ -139,4 +139,7 @@ class StoryTest < Minitest::Spec
 # FIXME: {:supplier} shouldn't be here!
     ctx[:size_breaks].inspect.must_equal %{[#<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"S\", color=\"RED\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"M\", color=\"PINK\">, #<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, size=\"L\", color=\"RED\">]}
   end
+
+
+# TODO: raise when :inject_as and :item_name are identical for {iterate}
 end

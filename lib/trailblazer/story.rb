@@ -16,7 +16,8 @@ module Trailblazer
           builder,
 
           input: Trailblazer::Story::Input(name: name, hash: defaults),
-          output: Trailblazer::Story::Output::ExtractModel(:model => name)
+          output: Trailblazer::Story::Output::ExtractModel(:model => name),
+          **options # TODO: test
         ]
 
         super(*args)
