@@ -113,6 +113,7 @@ class StoryTest < Minitest::Spec
     ctx[:product].inspect.must_equal %{#<OpenStruct name="Atmospheric", sku="123AAA", brand=#<OpenStruct name=\"Volcom\">, supplier="WC">}
     ctx[:detail].inspect.must_equal %{#<OpenStruct name=\"Bad Religion\", sku=\"Bad Religion-1\">}
   end
+  # TODO: bla_defaults(...**options) => should allow injecting more values, such as {color}
 
   it "doesn't leak defaults into the following episode (both have {:name} attribute)" do
     ctx = {supplier: "WC", _overrides: {}}
