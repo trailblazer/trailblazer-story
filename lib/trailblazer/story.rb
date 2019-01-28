@@ -31,7 +31,7 @@ module Trailblazer
 
         iterate = Iterate.new(episode: episode, set: set, item_name: item_name, name: name, inject_as: inject_as)
 
-        step builder: iterate, name: name, defaults: ->(ctx, **){ ctx } # FIXME is it a good idea to default here at all?
+        step builder: iterate, name: name, defaults: ->(ctx, **){ ctx }, id: name # FIXME is it a good idea to default here at all?
       end
     end
 
