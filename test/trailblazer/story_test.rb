@@ -128,7 +128,7 @@ class StoryTest < Minitest::Spec
   #   ctx = {supplier: "WC", _overrides: {}}
 
   it "sets static values from {:input}" do
-    ctx = {brand: "Volcom", supplier: "WC"}
+    ctx = {brand: "Volcom", supplier: "WC", _overrides: {}}
 
     signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
 
@@ -156,7 +156,7 @@ class StoryTest < Minitest::Spec
 
 # TODO: raise when :inject_as and :item_name are identical for {iterate}
   it "overrides values from {:input} when passed explicitly" do
-    ctx = {brand: "Volcom", supplier: "WC", name: "Aromatic"}
+    ctx = {brand: "Volcom", supplier: "WC", name: "Aromatic", _overrides: {}}
 
     signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
 
