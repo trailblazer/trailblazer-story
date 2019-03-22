@@ -12,17 +12,14 @@ class StoryTest < Minitest::Spec
   Detail = OpenStruct
 
   let(:bs) do
-    bs = Module.new do
-      extend Trailblazer::Story
-      module_function
-
-      def brand_defaults(ctx, **)
+    bs = Class.new(Trailblazer::Story) do
+      def self.brand_defaults(ctx, **)
         {
           name: "Roxy",
         }
       end
 
-      def product_defaults(ctx, brand:, supplier:, **) # DISCUSS: limit the args, without **?
+      def self.product_defaults(ctx, brand:, supplier:, **) # DISCUSS: limit the args, without **?
         {
           name:     "Atomic",
           sku:      "123AAA",
@@ -31,20 +28,20 @@ class StoryTest < Minitest::Spec
         }
       end
 
-      def item_defaults(ctx, **)
+      def self.item_defaults(ctx, **)
         {
           # name:     "Atomic",
         }
       end
 
-      def detail_defaults(ctx, name: "Dutch Nuggets", **)
+      def self.detail_defaults(ctx, name: "Dutch Nuggets", **)
         {
           name: name,
           sku:  "#{name}-1",
         }
       end
 
-      def product_release_defaults(ctx, product:, **)
+      def self.product_release_defaults(ctx, product:, **)
         {
           # name:     "Atomic",
           product: product,
@@ -75,9 +72,9 @@ class StoryTest < Minitest::Spec
       step builder: builders[:item], defaults: method(:item_defaults), name: :item
       step builder: builders[:detail], defaults: method(:detail_defaults), name: :detail
 
-      # product.size_breaks
+      # # product.size_breaks
       iterate set: ->(ctx, **){["S", "M", "L"]}, name: :size_breaks, item_name: :size_break, inject_as: :size do
-        def size_break_defaults(ctx, product:, size:, **)
+        def self.size_break_defaults(ctx, product:, size:, **)
           {
             product: product,
             size: size,
@@ -91,7 +88,6 @@ class StoryTest < Minitest::Spec
       step builder: builders[:product_release], defaults: method(:product_release_defaults), name: :product_release
 
       # step :product_with_size_break
-
     end
   end
 
@@ -99,7 +95,11 @@ class StoryTest < Minitest::Spec
     # ctx = {brand: "Volcom", supplier: "WC", _story_options: {}}
     ctx = {supplier: "WC", _overrides: {}}
 
+    # pp bs.instance_variable_get(:@state).to_h
+
     signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
+
+    pp ctx
 
     ctx[:product].inspect.must_equal %{#<OpenStruct name="Atomic", sku="123AAA", brand=#<OpenStruct name=\"Roxy\">, supplier="WC">}
     ctx[:detail].inspect.must_equal %{#<OpenStruct name=\"Dutch Nuggets\", sku=\"Dutch Nuggets-1\">}
@@ -124,16 +124,17 @@ class StoryTest < Minitest::Spec
     ctx[:item].inspect.must_equal %{#<OpenStruct>}
   end
 
-  it "allows nested flows" do
-    ctx = {supplier: "WC", _overrides: {}}
+  # it "allows nested flows" do
+  #   ctx = {supplier: "WC", _overrides: {}}
+
+  it "sets static values from {:input}" do
+    ctx = {brand: "Volcom", supplier: "WC"}
 
     signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
 
 # FIXME: {:supplier} shouldn't be here!
     ctx[:product_release].inspect.must_equal %{#<OpenStruct product=#<OpenStruct name=\"Atomic\", sku=\"123AAA\", brand=#<OpenStruct name=\"Roxy\">, supplier=\"WC\">, available_months=[\"DEC19\", \"JAN20\", \"FEB20\"]>}
   end
-
-
 
   it "Iterate" do
     ctx = {supplier: "WC", _overrides: {}}
@@ -154,4 +155,11 @@ class StoryTest < Minitest::Spec
 
 
 # TODO: raise when :inject_as and :item_name are identical for {iterate}
+  it "overrides values from {:input} when passed explicitly" do
+    ctx = {brand: "Volcom", supplier: "WC", name: "Aromatic"}
+
+    signal, (ctx, _) = Trailblazer::Activity::TaskWrap.invoke(bs, [ctx, {}])
+
+    ctx[:product].inspect.must_equal %{#<OpenStruct name="Aromatic", sku="123AAA", brand="Volcom", supplier="WC">}
+  end
 end

@@ -1,5 +1,5 @@
 module Trailblazer
-  module Story
+  class Story
     VERSION = "0.1.0"
   end
 end

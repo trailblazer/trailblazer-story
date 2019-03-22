@@ -1,55 +1,46 @@
 require "trailblazer/story/version"
 require "trailblazer/activity"
+require "trailblazer/activity/dsl/linear"
 
 module Trailblazer
-  module Story
+  class Story
 
-    def self.extended(extender)
-      extender.extend Trailblazer::Activity::Railway()
-      extender.extend Trailblazer::Story::InputOutput
-      extender.extend Trailblazer::Story::DSL
+    def self.initialize!(state=Class.new(Trailblazer::Activity::Railway))
+      @state = state
+    end
+
+    initialize!
+
+    # TODO
+    def self.inherited(subclass)
+      subclass.initialize!(Class.new(@state)) # TODO: copy state, but since it's immutable, this should be working for now.
+    end
+
+    class << self
+      extend Forwardable
+      def_delegators :@state, :call
     end
 
     module DSL
       def step(builder:, defaults:, name:, **options)
-        args = [
-          builder,
+        input  = Trailblazer::Story::Input(name: name, hash: defaults)
+        output = Trailblazer::Story::Output::ExtractModel(:model => name)
 
-          input: Trailblazer::Story::Input(name: name, hash: defaults),
-          output: Trailblazer::Story::Output::ExtractModel(:model => name),
-          **options # TODO: test
-        ]
+        options = options.merge(
+          extensions: [Trailblazer::Activity::TaskWrap::VariableMapping::Extension(input, output)],
+          id:         name,
+        )
 
-        super(*args)
+        @state.send(:step, builder, **options)
       end
 
       def iterate(set:, name:, item_name:, inject_as:, &block)
-        episode = Module.new do
-          extend Story
-          instance_exec(&block)
-        end
+        episode = Class.new(Story)
+        episode.instance_exec(&block)
 
         iterate = Iterate.new(episode: episode, set: set, item_name: item_name, name: name, inject_as: inject_as)
 
         step builder: iterate, name: name, defaults: ->(ctx, **){ ctx }, id: name # FIXME is it a good idea to default here at all?
-      end
-    end
-
-    module InputOutput
-      def step(task, options={})
-        options = options.dup
-        input, output = options.delete(:input), options.delete(:output)
-
-        if input
-          options = options.merge(extensions: [
-            Trailblazer::Activity::TaskWrap::VariableMapping::Extension(
-              Trailblazer::Activity::TaskWrap::Input.new(input),
-              Trailblazer::Activity::TaskWrap::Output.new(output)
-            )
-          ])
-        end
-
-        super(task, options)
       end
     end
 
@@ -67,7 +58,6 @@ module Trailblazer
         set = @set.(ctx, **ctx)
 
         overrides = ctx[:_overrides][@name] || {} # FIXME: redundant in Input
-
 
         ctx[:model] =
           set.each_with_index.collect do |item, index|
@@ -114,5 +104,8 @@ module Trailblazer
         end
       end
     end
+
+
+    extend Trailblazer::Story::DSL
   end
 end

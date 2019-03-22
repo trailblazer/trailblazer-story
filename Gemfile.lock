@@ -1,4 +1,17 @@
 PATH
+  remote: ../circuit
+  specs:
+    trailblazer-activity (0.7.1)
+      hirb
+      trailblazer-context
+
+PATH
+  remote: ../trailblazer-activity-dsl-linear
+  specs:
+    trailblazer-activity-dsl-linear (0.7.1)
+      trailblazer-activity
+
+PATH
   remote: .
   specs:
     trailblazer-story (0.1.0)
@@ -12,9 +25,6 @@ GEM
     minitest-line (0.6.5)
       minitest (~> 5.0)
     rake (10.5.0)
-    trailblazer-activity (0.7.1)
-      hirb
-      trailblazer-context
     trailblazer-context (0.1.2)
 
 PLATFORMS
@@ -25,6 +35,8 @@ DEPENDENCIES
   minitest (~> 5.0)
   minitest-line
   rake (~> 10.0)
+  trailblazer-activity!
+  trailblazer-activity-dsl-linear!
   trailblazer-story!
 
 BUNDLED WITH
