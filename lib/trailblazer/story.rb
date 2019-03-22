@@ -41,10 +41,12 @@ module Trailblazer
         input, output = options.delete(:input), options.delete(:output)
 
         if input
-          options = options.merge(Trailblazer::Activity::TaskWrap::VariableMapping.extension_for(
-
-            Trailblazer::Activity::TaskWrap::Input.new(input),
-            Trailblazer::Activity::TaskWrap::Output.new(output)) => true)
+          options = options.merge(extensions: [
+            Trailblazer::Activity::TaskWrap::VariableMapping::Extension(
+              Trailblazer::Activity::TaskWrap::Input.new(input),
+              Trailblazer::Activity::TaskWrap::Output.new(output)
+            )
+          ])
         end
 
         super(task, options)
