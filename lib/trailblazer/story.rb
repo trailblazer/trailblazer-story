@@ -1,6 +1,6 @@
 require "trailblazer/story/version"
-require "trailblazer/activity"
 require "trailblazer/activity/dsl/linear"
+require "forwardable"
 
 module Trailblazer
   class Story
@@ -25,13 +25,14 @@ module Trailblazer
       def step(builder:, defaults:, name:, **options)
         input  = Trailblazer::Story::Input(name: name, hash: defaults)
         output = Trailblazer::Story::Output::ExtractModel(:model => name)
+        ext, _ = Trailblazer::Activity::DSL::Linear::VariableMapping(input: input, output: output)
 
         options = options.merge(
-          extensions: [Trailblazer::Activity::TaskWrap::VariableMapping::Extension(input, output)],
+          extensions: [ext],
           id:         name,
         )
 
-        @state.send(:step, builder, **options)
+        @state.step(builder, **options)
       end
 
       def iterate(set:, name:, item_name:, inject_as:, &block)
@@ -78,12 +79,17 @@ module Trailblazer
     end
 
     def self.Input(hash:, name:, strategy: method(:Merge))
-      ->(ctx, **) do # TODO: why do kw args not work here? {:_overrides}
+      ->(ctx, _overrides:, **) do
+        # default_options = hash.(ctx, **ctx, **(_overrides[name] || {})) # execute the input provider.
+
+        # TODO: this doesn't pass overrides into the defaulter, and will result in {detail_defaults} never see a different {name}
         default_options = hash.(ctx, **ctx) # execute the input provider.
 
-        options = strategy.(default_options, ctx[:_overrides][name] || {})
 
-        Trailblazer::Context(options)
+        options = strategy.(default_options, _overrides[name] || {})
+
+        options
+        # Trailblazer::Context(options)
       end
     end
 
@@ -95,6 +101,9 @@ module Trailblazer
     module Output
       module_function
       def ExtractModel(source2target)
+        return source2target
+
+        puts "@@@@@ #{source2target.inspect}"
         ->(original, ctx, **) do
           source2target.each do |source_key, target_key|
             original[target_key] = ctx[source_key]
